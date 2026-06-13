@@ -5,3 +5,9 @@ __pycache__/
 *.db
 .venv/
 venv/
+prompt.md
+voice.test.py
+*.wav
+*.mp3
+voices/
+*.wav
