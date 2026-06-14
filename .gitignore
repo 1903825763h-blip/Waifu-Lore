@@ -11,3 +11,4 @@ voice.test.py
 *.mp3
 voices/
 *.wav
+characters/

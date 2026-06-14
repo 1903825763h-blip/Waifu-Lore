@@ -17,7 +17,7 @@ def chat_with_waifu(message,waifu):
         messages=[
             {
                 "role": "system",
-                "content": f"{waifu.introduction}"
+                "content": f"{waifu.prompt}"
             },
             {
                 "role": "user",

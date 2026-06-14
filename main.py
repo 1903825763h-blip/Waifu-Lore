@@ -2,17 +2,18 @@ import json
 import api
 import voice_generate
 import re
-
+import  character_manager
 
 
 class Waifu:
-    def __init__(self, name, introduction):
+    def __init__(self, name, prompt,character_id):
         self.name = name
-        self.introduction = introduction
+        self.prompt = prompt
+        self.character_id = character_id
 
 
-#从json里读取角色名字,prompt.md读取角色介绍
-def load_character():
+#从json里读取角色名字,prompt.md读取角色介绍(已废弃)
+"""def load_character():
     with open("character.json", "r", encoding="utf-8") as file:
         data = json.load(file)
     with open("prompt.md", "r", encoding="utf-8") as prom:
@@ -21,7 +22,8 @@ def load_character():
         data["name"],
         prompt,
     )
-    return character
+    return character"""
+
 #删除括号和内的内容
 def clean_text_for_voice(text):
     # 删除中文括号里的内容：（...）
@@ -36,12 +38,14 @@ def clean_text_for_voice(text):
     return text
 
 def main():
-    character = load_character()
+    character = character_manager.choose_character()
+    if not character:
+        return
     #读取提示词
     messages =[
         {
             "role": "system",
-            "content": character.introduction
+            "content": character.prompt
         }
     ]
     while True:
@@ -57,7 +61,7 @@ def main():
 
 
 
-        api_messages = [messages[0]] + messages[-10:]
+        api_messages = [messages[0]] + messages[-20:]
 
         reply = api.chat_with_waifu(api_messages,character)
         messages.append({
@@ -76,7 +80,7 @@ def main():
 
         except Exception as e:
             print(f"{character.name}:{reply}", flush=True)
-            print(f"[语音生成失败，已跳过]: {e}")
+            print(f"[语音生成失败，请确定已启动voicebox服务]: {e}")
 
 
 
