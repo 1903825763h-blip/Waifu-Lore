@@ -75,9 +75,10 @@ def choose_character():
     selected_character = load_character(selected_id)
     return selected_character
 
-if __name__ == "__main__":
+"""if __name__ == "__main__":
     character = choose_character()
 
     if character:
         print("你选择了:", character["name"])
         print(character["prompt"])
+"""
