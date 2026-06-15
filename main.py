@@ -2,6 +2,8 @@ import api
 import voice_generate
 import re
 import character_manager
+import database
+import memory_manager
 
 
 # 删除括号和括号内的内容
@@ -19,6 +21,9 @@ def clean_text_for_voice(text):
 
 
 def main():
+    # 初始化数据库
+    database.init_db()
+
     # 选择角色
     # choose_character() 会返回一个 Waifu 对象
     # 如果没有成功选择角色，就继续让用户选择
@@ -51,8 +56,35 @@ def main():
         # 接收用户输入
         message = input("我:")
 
-        #end则结束
+        # end则结束
         if message == "end":
+            """
+            主动退出时保存当前剩余聊天记录
+
+            为什么这里也要保存：
+                正常情况下，聊天记录达到 50 条才会触发压缩保存。
+                但是如果用户在没有达到 50 条之前主动输入 end 退出，
+                这部分聊天记录就不会被保存成长期记忆。
+
+            所以这里的逻辑是：
+                1. 取出除了 system prompt 以外的聊天记录
+                2. 如果确实有聊天内容，就调用 summarize_messages() 总结
+                3. 如果总结结果不是 None，就保存进数据库
+                4. 最后退出程序
+
+            注意：
+                这里保存的是“当前剩余聊天记录的总结”，不是逐条保存原始聊天。
+            """
+
+            chat_messages = messages[1:]
+
+            if chat_messages:
+                summary = memory_manager.summarize_messages(chat_messages)
+
+                if summary:
+                    database.save_memory(character.character_id, summary)
+                    print("[memory] 退出前的对话已保存")
+
             break
 
         # 保存用户当前输入
@@ -63,8 +95,9 @@ def main():
 
         # 发送给 API 的上下文
         # messages[0] 是 system prompt
-        # messages[-n:] 是最近 n条对话，避免上下文太长
-        api_messages = [messages[0]] + messages[-100:]
+        # messages[1:] 是除了 system prompt 以外的聊天记录
+        # messages[1:][-100:] 是最近 100 条聊天，避免上下文太长
+        api_messages = [messages[0]] + messages[1:][-100:]
 
         # 调用 API 获取角色回复
         reply = api.chat_with_waifu(api_messages, character)
@@ -101,6 +134,51 @@ def main():
         # 如果不开语音，直接显示文字
         else:
             print(f"{character.name}:{reply}", flush=True)
+
+        """
+        聊天记录压缩保存逻辑
+
+        为什么放在回复显示之后：
+            如果先压缩，再显示回复，
+            那么刚好达到 50 条时，用户会感觉程序卡住，
+            因为它要先等待 LLM 总结旧聊天记录。
+            所以这里先显示/播放当前回复，再做记忆压缩。
+
+        设计逻辑：
+            messages[0] 是 system prompt，不参与总结。
+            messages[1:] 才是真正的 user / assistant 聊天记录。
+
+            当聊天记录达到 50 条：
+                old_messages = 较旧的 40 条
+                recent_messages = 最近的 10 条
+
+            old_messages 会被总结成长期记忆，保存进 SQLite。
+            recent_messages 会被保留下来，保证当前对话不会突然断掉。
+        """
+
+        # 获取除了 system prompt 以外的聊天记录
+        # messages[0] 是 system prompt，不应该参与总结
+        chat_messages = messages[1:]
+
+        # 如果聊天记录达到 n 条，就进行压缩
+        if len(chat_messages) >= 50:
+            # old_messages 是较旧的 n 条，用来总结成长期记忆
+            old_messages = chat_messages[:-10]
+
+            # recent_messages 是最近的 -n 条，用来保持当前对话连贯
+            recent_messages = chat_messages[-10:]
+
+            # 调用 LLM 总结较旧的聊天记录
+            summary = memory_manager.summarize_messages(old_messages)
+
+            # 如果总结结果不是 None，就保存进数据库
+            if summary:
+                database.save_memory(character.character_id, summary)
+
+            # 重新整理 messages
+            # 保留 system prompt + 最近 10 条聊天
+            messages = [messages[0]] + recent_messages
+            print("[memory] 对话已压缩并保存")
 
 
 if __name__ == "__main__":

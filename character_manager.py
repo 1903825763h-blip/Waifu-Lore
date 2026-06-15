@@ -8,7 +8,7 @@ class Waifu:
     def __init__(self, name, prompt, character_id):
         self.name = name
         self.prompt = prompt
-        self.character_id = character_id
+        self.character_id = character_id#文件夹的名字为id
 
 def list_characters():
     #如果不存在文件夹则创建并且返回空列表
@@ -75,10 +75,69 @@ def choose_character():
     selected_character = load_character(selected_id)
     return selected_character
 
-"""if __name__ == "__main__":
-    character = choose_character()
+def create_character():
+    # 接收角色文件夹名
+    character_id = input("请输入角色文件夹名:")
+    character_id = character_id.strip()
 
-    if character:
-        print("你选择了:", character["name"])
-        print(character["prompt"])
-"""
+    # 判断角色文件夹名是否为空
+    if not character_id:
+        print("角色文件夹名不能为空")
+        return None
+
+    # 拼接角色文件夹路径
+    character_path = os.path.join(CHARACTER_DIR, character_id)
+
+    # 如果角色已经存在，就不重复创建
+    if os.path.exists(character_path):
+        print("这个角色已经存在")
+        return None
+
+    # 接收角色显示名称
+    character_name = input("请输入角色名字: ")
+    character_name = character_name.strip()
+
+    # 判断角色名字是否为空
+    if not character_name:
+        print("角色名字不能为空")
+        return None
+
+    # 创建角色文件夹
+    os.makedirs(character_path)
+
+    # 拼接 character.json 路径
+    json_path = os.path.join(character_path, "character.json")
+
+    # 要写入 json 的角色数据
+    character_data = {
+        "name": character_name
+    }
+
+    # 写入 character.json
+    with open(json_path, "w", encoding="utf-8") as file:
+        json.dump(character_data, file, ensure_ascii=False, indent=4)
+
+    print(f"角色创建成功: {character_name} ({character_id})")
+
+    # 接收角色 prompt
+    print("请输入角色 prompt，输入完成后直接回车即可：")
+    character_prompt = input("prompt: ")
+    character_prompt = character_prompt.strip()
+
+    # 判断 prompt 是否为空
+    if not character_prompt:
+        print("prompt 不能为空")
+        return None
+
+    # 拼接 prompt.md 路径
+    prompt_path = os.path.join(character_path, "prompt.md")
+
+    # 写入 prompt.md
+    with open(prompt_path, "w", encoding="utf-8") as file:
+        file.write(character_prompt)
+
+    return character_id
+
+if __name__ == "__main__":
+
+    print()
