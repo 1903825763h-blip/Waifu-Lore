@@ -42,7 +42,10 @@ def summarize_messages(messages):
 2. 不要逐句复述聊天记录
 3. 不要保存无意义寒暄
 4. 用简短中文总结
-5. 如果没有值得保存的信息，返回：NONE
+5. 不要记录普通寒暄
+6. 只保留对未来对话有帮助的信息
+7.不要提出任何建议,仅客观总结发生的事实
+8. 如果没有值得保存的信息，只能返回一个单词：NONE。不要解释原因。不要加括号。不要加任何其他文字。
 
 聊天记录如下：
 
@@ -78,7 +81,7 @@ def summarize_messages(messages):
 import database
 
 
-if __name__ == "__main__":
+"""if __name__ == "__main__":
     database.init_db()
 
     test_messages = [
@@ -94,4 +97,4 @@ if __name__ == "__main__":
 
     if summary:
         database.save_memory("411", summary)
-        print("总结已保存到数据库")
+        print("总结已保存到数据库")"""

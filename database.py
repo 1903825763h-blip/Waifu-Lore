@@ -116,4 +116,4 @@ if __name__ == "__main__":
     init_db()
 
 
-    print(load_memories("月社妃"))
+    print(load_memories("411"))

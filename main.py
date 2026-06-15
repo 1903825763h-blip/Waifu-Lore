@@ -43,14 +43,36 @@ def main():
 
     # 读取角色 prompt
     # system 用于告诉 AI 当前角色设定
+    # 读取当前角色的长期记忆
+    memories = database.load_memories(character.character_id)
+
+    # 把长期记忆列表拼接成一段文本
+    memory_text = ""
+
+    for memory in memories:
+        memory_text += f"- {memory}\n"
+
+    # 如果有长期记忆，就把记忆加入 system prompt,并且用提示词告诉llm是长期记忆
+    if memory_text:
+        system_prompt = f"""
+    {character.prompt}
+
+    以下是你和 user 过去对话中形成的长期记忆：
+    {memory_text}
+    """
+    else:
+        system_prompt = character.prompt
+
+    # 读取角色 prompt
+    # system 用于告诉 AI 当前角色设定
     messages = [
         {
             "role": "system",
-            "content": character.prompt
+            "content": system_prompt
         }
     ]
 
-    print("tips: 安全词为 end，输入 end 则结束对话")
+    print("tips: 安全词为 end，输入 end 则结束对话并总结聊天记录")
 
     while True:
         # 接收用户输入
