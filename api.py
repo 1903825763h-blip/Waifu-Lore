@@ -40,7 +40,7 @@ def chat_with_waifu(messages, waifu=None):
     """
 
     response = client.chat.completions.create(
-        model="deepseek-chat",
+        model="deepseek-v4-pro",
         messages=messages,
         stream=False
     )
